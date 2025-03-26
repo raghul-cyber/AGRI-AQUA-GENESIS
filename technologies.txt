@@ -1,0 +1,21 @@
+🚀 Technologies Used in the AI-Powered IoT Hydroponics & Aquaponics Solution
+1️⃣ Hardware Technologies:
+✅ IoT Sensors – pH, EC, Temperature, Water Level, Dissolved Oxygen Sensors
+✅ Microcontrollers & Boards – ESP32, Raspberry Pi (for edge computing)
+✅ Actuators & Modules – Water pumps, Aerators, Solenoid valves, Relays
+✅ Communication Protocols – MQTT (for real-time IoT messaging)
+
+2️⃣ Software Technologies:
+✅ Mobile App Development – Flutter (Dart)
+✅ Backend & Cloud Services – Firebase Realtime Database, Google Cloud IoT, AWS IoT
+✅ Web Dashboard – React.js (for visualization & remote monitoring)
+
+3️⃣ AI & Data Analytics:
+✅ Machine Learning – TensorFlow, TensorFlow Lite (for on-device AI)
+✅ Computer Vision – OpenCV (for plant/fish health analysis)
+✅ Data Processing & Analytics – Pandas, NumPy, Matplotlib
+
+4️⃣ Connectivity & Integration:
+✅ MQTT Protocol – Real-time communication with IoT devices
+✅ Google Assistant API – Voice command integration for automation
+✅ Cloud Storage & Edge AI – Google Cloud, Firebase, Local AI processing on ESP32
