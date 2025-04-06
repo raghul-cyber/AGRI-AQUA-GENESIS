@@ -1,0 +1,38 @@
+// Backend (Node.js + Express) const express = require('express'); const mongoose = require('mongoose'); const mqtt = require('mqtt'); const cors = require('cors');
+
+const app = express(); app.use(express.json()); app.use(cors());
+
+mongoose.connect('mongodb://localhost:27017/hydroponics', { useNewUrlParser: true, useUnifiedTopology: true });
+
+const SensorSchema = new mongoose.Schema({ temperature: Number, humidity: Number, pH: Number, tds: Number, timestamp: { type: Date, default: Date.now } });
+
+const SensorData = mongoose.model('SensorData', SensorSchema);
+
+const mqttClient = mqtt.connect('mqtt://broker.hivemq.com'); mqttClient.on('connect', () => { mqttClient.subscribe('hydroponics/sensors'); });
+
+mqttClient.on('message', async (topic, message) => { const data = JSON.parse(message.toString()); await SensorData.create(data); });
+
+app.get('/api/sensors', async (req, res) => { const data = await SensorData.find().sort({ timestamp: -1 }).limit(10); res.json(data); });
+
+app.listen(5000, () => console.log('Server running on port 5000'));
+
+// Frontend (React.js + Chart.js) import React, { useEffect, useState } from 'react'; import Chart from 'chart.js/auto'; import axios from 'axios';
+
+const Dashboard = () => { const [sensorData, setSensorData] = useState([]);
+
+useEffect(() => {
+    axios.get('http://localhost:5000/api/sensors').then(response => {
+        setSensorData(response.data);
+    });
+}, []);
+
+return (
+    <div>
+        <h1>Hydroponics Sensor Data</h1>
+        <canvas id="sensorChart"></canvas>
+    </div>
+);
+
+};
+
+export default Dashboard;
