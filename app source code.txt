@@ -1,0 +1,83 @@
+import 'package:flutter/material.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:tflite_flutter/tflite_flutter.dart';
+
+void main() {
+  runApp(HydroponicsApp());
+}
+
+class HydroponicsApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: DashboardScreen(),
+    );
+  }
+}
+
+class DashboardScreen extends StatefulWidget {
+  @override
+  _DashboardScreenState createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  final databaseReference = FirebaseDatabase.instance.reference();
+  double pH = 0.0;
+  double ec = 0.0;
+  double temperature = 0.0;
+  double waterLevel = 0.0;
+  late Interpreter interpreter;
+
+  @override
+  void initState() {
+    super.initState();
+    loadModel();
+    databaseReference.child("sensors").onValue.listen((event) {
+      var data = event.snapshot.value;
+      setState(() {
+        pH = data['pH'];
+        ec = data['ec'];
+        temperature = data['temperature'];
+        waterLevel = data['waterLevel'];
+      });
+    });
+  }
+
+  Future<void> loadModel() async {
+    interpreter = await Interpreter.fromAsset('assets/model.tflite');
+  }
+
+  double predictNutrientAdjustment(double pH, double ec) {
+    var input = [pH, ec];
+    var output = List.filled(1, 0).reshape([1, 1]);
+    interpreter.run(input, output);
+    return output[0][0];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Smart Hydroponics")),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Text("pH Level: $pH"),
+            Text("EC Level: $ec"),
+            Text("Temperature: $temperature°C"),
+            Text("Water Level: $waterLevel%"),
+            ElevatedButton(
+              onPressed: () {
+                double adjustment = predictNutrientAdjustment(pH, ec);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Recommended Nutrient Adjustment: $adjustment")));
+              },
+              child: Text("Predict Nutrient Needs"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
