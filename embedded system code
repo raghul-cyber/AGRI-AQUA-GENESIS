@@ -1,0 +1,81 @@
+#include <Wire.h>
+#include <Adafruit_SSD1306.h>
+#include <DallasTemperature.h>
+#include <OneWire.h>
+#include <ESP8266WiFi.h>
+#include <WiFiClient.h>
+
+// Define sensor pins
+#define PH_SENSOR A0        // pH sensor connected to Analog pin
+#define TEMP_SENSOR D4       // DS18B20 temperature sensor
+#define WATER_LEVEL_SENSOR D5 // Water level sensor
+#define RELAY_PUMP D6        // Relay for water/nutrient pump
+#define RELAY_VALVE D7       // Relay for solenoid valve
+
+// OLED Display setup
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
+// OneWire setup for DS18B20 temperature sensor
+OneWire oneWire(TEMP_SENSOR);
+DallasTemperature sensors(&oneWire);
+
+void setup() {
+    Serial.begin(115200);
+    pinMode(PH_SENSOR, INPUT);
+    pinMode(WATER_LEVEL_SENSOR, INPUT);
+    pinMode(RELAY_PUMP, OUTPUT);
+    pinMode(RELAY_VALVE, OUTPUT);
+    
+    // Initialize OLED display
+    if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+        Serial.println("SSD1306 allocation failed");
+        for(;;);
+    }
+    display.clearDisplay();
+    
+    // Initialize temperature sensor
+    sensors.begin();
+}
+
+void loop() {
+    // Read pH Sensor
+    int phValue = analogRead(PH_SENSOR);
+    float ph = (phValue * 14.0) / 1024.0; // Convert to pH scale
+
+    // Read Water Level Sensor
+    int waterLevel = digitalRead(WATER_LEVEL_SENSOR);
+
+    // Read Temperature Sensor
+    sensors.requestTemperatures();
+    float temperature = sensors.getTempCByIndex(0);
+
+    // Display Data on OLED
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setTextColor(WHITE);
+    display.setCursor(0,0);
+    display.println("Hydroponics System");
+    display.print("pH: "); display.println(ph);
+    display.print("Temp: "); display.print(temperature); display.println(" C");
+    display.print("Water Level: "); display.println(waterLevel == HIGH ? "Full" : "Low");
+    display.display();
+
+    // Automated Control Logic
+    if (ph < 5.5) {
+        digitalWrite(RELAY_VALVE, HIGH);  // Open solenoid valve to add alkaline solution
+        Serial.println("Adjusting pH: Adding Alkaline Solution");
+    } else {
+        digitalWrite(RELAY_VALVE, LOW);
+    }
+
+    if (waterLevel == LOW) {
+        digitalWrite(RELAY_PUMP, HIGH);  // Activate pump to refill water
+        Serial.println("Water Level Low: Pump Activated");
+    } else {
+        digitalWrite(RELAY_PUMP, LOW);
+    }
+
+    delay(5000); // Update every 5 seconds
+}
